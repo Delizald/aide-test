@@ -1,0 +1,11 @@
+---
+- name: retrieve-conf
+  hosts: webservers
+  sudo: yes
+  tasks:
+  
+  - name: Retrieve httpd.conf file from node
+    fetch: src=/etc/httpd/conf/httpd.conf dest=/opt/cloudhost/aide-files/ fail_on_missing=yes
+      
+  - name: Retrieve ssl.conf file from node 
+    fetch: src=/etc/httpd/conf.d/ssl.conf dest=/opt/cloudhost/aide-files/ fail_on_missing=yes

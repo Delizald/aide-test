@@ -1,0 +1,70 @@
+---
+- name: aide-check.yml
+  hosts: webservers
+  sudo: yes
+  tasks:
+  
+    - name: Copy AIDE database to node
+      copy: src=/opt/cloudhost/aide-files/{{ansible_fqdn}}/var/lib/aide/{{ansible_nodename}}-aide.new.db.gz dest=/var/lib/aide/{{ansible_nodename}}-aide.db.gz owner=root group=root mode=660
+      
+    - name: Run AIDE database check for configuration integrity
+      command: aide 
+      register: result
+      #playbook won't continue to run if aide check fails, ansible will report fatal error
+      #and therefore we ignore this error. We're not interested in the error message only
+      #command output. If result is empty it means the integrity check is ok.
+      ignore_errors: True
+      
+
+      #Send e-mail notification if aide check fails.
+    - local_action: mail
+                    host='smtphosthere'
+                    from="enternotificationpdlhere"
+                    to="<enternotificationpdlhere>"
+                    subject='AIDE check failed for {{ansible_fqdn}} ' 
+                    body='AYYYYYYYYYYYYYYYYY'
+      when: result.stdout!=''
+      
+    
+    - name: Unlock httpd.conf in node to edit file
+      command: chattr -i /etc/httpd/conf/httpd.conf
+      when: result.stdout!=''
+      
+    - name: Unlock ssl.conf for editing to edit file
+      command: chattr -i /etc/httpd/conf.d/ssl.conf
+      # ----------- END: Unlock configuration files with chattr
+      when: result.stdout!=''
+      
+    - name: Copy httpd.conf to node if AIDE check fails
+      copy: src=/opt/cloudhost/aide-files/{{ansible_fqdn}}/etc/httpd/conf/httpd.conf dest=/etc/httpd/conf/ owner=root group=root mode=644
+      when: result.stdout!=''
+      
+    - name: Copy ssl.conf to node if AIDE check fails
+      copy: src=/opt/cloudhost/aide-files/{{ansible_fqdn}}/etc/httpd/conf.d/ssl.conf dest=/etc/httpd/conf.d/ owner=root group=root mode=644
+      when: result.stdout!=''
+      
+    - name: Lock httpd.conf in node to edit file
+      command: chattr +i /etc/httpd/conf/httpd.conf
+      when: result.stdout!=''
+      
+    - name: Lock ssl.conf for editing to edit file
+      command: chattr +i /etc/httpd/conf.d/ssl.conf
+      # ----------- END: Unlock configuration files with chattr
+      when: result.stdout!=''
+      
+    #Create a new aide database and retrieve it if check failed
+      
+    - name: Delete old AIDE databse in node
+      command: rm /var/lib/aide/{{ansible_nodename}}-aide.db.gz
+      
+    - name: Initialize a new AIDE database file in node
+      command: aide -i
+      when: result.stdout!=''
+      
+    - name: Retrieve AIDE database from node
+      fetch: src=/var/lib/aide/{{ansible_nodename}}-aide.new.db.gz dest=/opt/cloudhost/aide-files/ fail_on_missing=yes
+      when: result.stdout!=''
+    
+    - name: Delete new AIDE database from node
+      command: rm -f /var/lib/aide/{{ansible_nodename}}-aide.new.db.gz
+      when: result.stdout!=''

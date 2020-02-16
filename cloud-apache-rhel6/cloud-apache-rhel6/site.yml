@@ -1,0 +1,11 @@
+---
+- name: CSM Apache Entry Point
+  hosts: all
+  sudo: yes
+  
+#- include: sysprep.yml
+- include: apache.yml
+- include: php.yml
+- include: aide.yml
+- include: retrieve-conf.yml
+#- include: python.yml

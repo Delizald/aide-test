@@ -1,0 +1,35 @@
+---
+- name: aide-check.yml
+  hosts: webservers
+  sudo: yes
+  tasks:
+  
+   - name: Copy httpd.conf to node
+      copy: src=/opt/cloudhost/aide-files/{{ansible_fqdn}}/etc/httpd/conf/httpd.conf dest=/tmp/ owner=root group=root mode=644
+      
+    - name: Copy ssl.conf to node
+      copy: src=/opt/cloudhost/aide-files/{{ansible_fqdn}}/etc/httpd/conf.d/ssl.conf dest=/tmp/ owner=root group=root mode=644
+  
+    - name: Unlock httpd.conf 
+      command: chattr -i /etc/httpd/conf/httpd.conf
+      when: result.stdout!=''
+      
+    - name: Unlock ssl.conf
+      command: chattr -i /etc/httpd/conf.d/ssl.conf
+      when: result.stdout!=''
+      
+    - name: Copy httpd.conf to node if AIDE check fails
+      copy: src=/opt/cloudhost/aide-files/{{ansible_fqdn}}/etc/httpd/conf/httpd.conf dest=/etc/httpd/conf/ owner=root group=root mode=644
+      when: result.stdout!=''
+      
+    - name: Copy ssl.conf to node if AIDE check fails
+      copy: src=/opt/cloudhost/aide-files/{{ansible_fqdn}}/etc/httpd/conf.d/ssl.conf dest=/etc/httpd/conf.d/ owner=root group=root mode=644
+      when: result.stdout!=''
+      
+    - name: Lock httpd.conf in node to edit file
+      command: chattr +i /etc/httpd/conf/httpd.conf
+      when: result.stdout!=''
+      
+    - name: Lock ssl.conf for editing to edit file
+      command: chattr +i /etc/httpd/conf.d/ssl.conf
+      when: result.stdout!=''

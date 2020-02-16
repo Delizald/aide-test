@@ -1,0 +1,17 @@
+# LocalConfig.conf - Configuration file for SiteMinder web agent's local settings
+DefaultAgentName="{{ansible_fqdn}}"
+IgnoreUrl="/DO_NOT_REMOVE/health_check.html"
+IgnoreUrl="/DO_NOT_REMOVE/health_check.jsp"
+LogConsole="NO"
+LogAppend="YES"
+LogFile="YES"
+LogLevel="2"
+logfilename="{{apache_logs_dir}}/sm.log"
+# ----- START: Trace settings
+TraceFile="NO"
+TraceAppend="YES"
+TraceFileSize="50"
+TraceFilesToKeep=10
+TraceConfigFile="/etc/httpd/conf/WebAgentTrace.conf"
+TraceFileName="{{apache_logs_dir}}/sm.log"
+# ----- END: Trace settings
